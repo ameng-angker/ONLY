@@ -1,106 +1,50 @@
-name: ⛅ CF Worker
-on:
-  # docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow
-  # docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#workflow_dispatch
-  # docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#onworkflow_dispatchinputs
-  workflow_dispatch:
-    # github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/
-    # docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions#inputs
-    inputs:
-      # docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onworkflow_dispatchinputs
-      environment:
-        description: 'wrangler env to deploy to'
-        required: true
-        default: 'dev'
-        type: choice
-        options:
-        - dev
-        - prod
-        - one
-      commit:
-        description: 'git tip commit to deploy'
-        default: 'main'
-        required: true
+name: Deploy to Cloudflare Workers
 
+on:
   push:
-    # TODO: inputs.environment and inputs.commit
-    branches:
-      - "main"
-    tags:
-      - "v*"
-    paths-ignore:
-      - ".github/**"
-      - "!.github/workflows/cf.yml"
-      - ".env.example"
-      - ".eslintrc.cjs"
-      - ".prettierignore"
-      - "fly.toml"
-      - "README.md"
-      - "node.Dockerfile"
-      - "deno.Dockerfile"
-      - "import_map.json"
-      - ".vscode/*"
-      - ".husky/*"
-      - ".prettierrc.json"
-      - "LICENSE"
-      - "run"
-  repository_dispatch:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 env:
-  GIT_REF: ${{ github.event.inputs.commit || github.ref }}
-  # default is 'dev' which is really empty/no env
-  WORKERS_ENV: ''
+  CLOUDFLARE_ACCOUNT_ID: 4dd02089951b04b51647ab7a49434116
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
 
 jobs:
   deploy:
-    name: 🚀 Deploy worker
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    permissions:
+      contents: read
+      deployments: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3.3.0
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          ref: ${{ env.GIT_REF }}
-          fetch-depth: 0
+          node-version: '20'
 
-      - name: 🛸 Env?
-        # 'dev' env deploys to default WORKERS_ENV, which is, '' (an empty string)
-        if: github.event.inputs.environment == 'prod' || github.event.inputs.environment == 'one'
+      - name: Install dependencies
+        run: npm install
+
+      - name: Configure Wrangler
         run: |
-          echo "WORKERS_ENV=${WENV}" >> $GITHUB_ENV
-          echo "COMMIT_SHA=${COMMIT_SHA}" >> $GITHUB_ENV
-        shell: bash
-        env:
-          WENV: ${{ github.event.inputs.environment }}
-          COMMIT_SHA: ${{ github.sha }}
+          echo "CLOUDFLARE_ACCOUNT_ID=4dd02089951b04b51647ab7a49434116" >> $GITHUB_ENV
+          echo "CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }}" >> $GITHUB_ENV
+          npx wrangler whoami
 
-      - name: 🎱 Tag?
-        # docs.github.com/en/actions/learn-github-actions/contexts#github-context
-        if: github.ref_type == 'tag'
-        run: |
-          echo "WORKERS_ENV=${WENV}" >> $GITHUB_ENV
-          echo "COMMIT_SHA=${COMMIT_SHA}" >> $GITHUB_ENV
-        shell: bash
-        env:
-          # tagged deploys always deploy to prod
-          WENV: 'prod'
-          COMMIT_SHA: ${{ github.sha }}
-
-        # npm (and node16) are installed by wrangler-action in a pre-job setup
-      - name: 🏗 Get dependencies
-        run: npm i
-
-      - name: 📚 Wrangler publish
-        # github.com/cloudflare/wrangler-action
-        uses: cloudflare/wrangler-action@2.0.0
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@3.0.0
         with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          # input overrides env-defaults, regardless
-          environment: ${{ env.WORKERS_ENV }}
-        env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-          GIT_COMMIT_ID: ${{ env.GIT_REF }}
+          apiToken: 39GX59zamuCzCir-Mt6Nse_H_9JJuH5xLVKFY5IY
+          accountId: 4dd02089951b04b51647ab7a49434116
+          command: deploy
+          workingDirectory: './'
+          environment: 'production'
+          wranglerVersion: '3'
 
-      - name: 🎤 Notice
+      - name: Verify deployment
         run: |
-          echo "::notice::Deployed to ${WORKERS_ENV} / ${GIT_REF} @ ${COMMIT_SHA}"
+          echo "Worker successfully deployed to Cloudflare account 4dd02089951b04b51647ab7a49434116"
+          echo "API Token last 4 chars: ${39GX59zamuCzCir-Mt6Nse_H_9JJuH5xLVKFY5IY: -4}"
