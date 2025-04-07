@@ -1,6 +1,6 @@
 import { connect } from "cloudflare:sockets";
 
-const proxyListURL = 'https://github.com/TheSpeedX/PROXY-List/blob/master/http.txt;
+const proxyListURL = 'https://github.com/Gendarxml/ONLY/blob/main/update_proxyip.txt;
 const pagehost = '/'
 const namaWeb = 'FREE PROXY LIFETIME'
 const telegramku = 'https://t.me/seaker877'
