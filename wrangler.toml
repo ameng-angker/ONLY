@@ -1,4 +1,4 @@
-name = "gendar" # todo
+name = "admin" # todo
 main = "js/_worker.js"
 compatibility_date = "2024-05-26"
 
