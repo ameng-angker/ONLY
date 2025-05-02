@@ -1,6 +1,6 @@
 import { connect } from "cloudflare:sockets";
 
-const proxyListURL = 'https://github.com/Mayumiwandi/Emilia/blob/main/Data/ProxyIsp.txt';
+const proxyListURL = 'https://raw.githubusercontent.com/Mayumiwandi/Emilia/refs/heads/main/Data/ProxyIsp.txt';
 const pagehost = '/'
 const namaWeb = 'FREE PROXY LIFETIME'
 const telegramku = 'https://t.me/seaker877'
