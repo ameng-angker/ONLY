@@ -1,6 +1,6 @@
 import { connect } from "cloudflare:sockets";
 
-const proxyListURL = 'https://raw.githubusercontent.com/xsm-syn/Nautica/refs/heads/main/proxyList.txt';
+const proxyListURL = 'https://raw.githubusercontent.com/ABPindo/indonesianadblockrules/master/subscriptions/domain_adult.txt';
 const pagehost = '/'
 const namaWeb = 'FREE PROXY LIFETIME'
 const telegramku = 'https://t.me/seaker877'
